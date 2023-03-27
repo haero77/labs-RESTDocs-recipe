@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '2.7.8'
 	id 'io.spring.dependency-management' version '1.0.15.RELEASE'
+	id 'org.asciidoctor.jvm.convert' version '3.3.2' // Gradle 7부터 "org.asciidoctor.jvm.convert" 사용
 }
 
 group = 'preferkim'
@@ -9,6 +10,7 @@ version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '17'
 
 configurations {
+	asciidoctorExtensions // dependencies 에서 적용한 것 추가
 	compileOnly {
 		extendsFrom annotationProcessor
 	}
@@ -27,8 +29,51 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+	// REST Docs
+	asciidoctorExtensions 'org.springframework.restdocs:spring-restdocs-asciidoctor'
+	testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
 }
 
-tasks.named('test') {
+/*
+	REST Docs & asciidoctor
+ */
+
+
+ext {
+	// gradle이 "build/generated-snippets" 스니펫을 생성하므로, 해당 디렉토리를 환경변수로 사용
+	snippetsDir = file('build/generated-snippets')
+}
+
+test {
+	// snippetsDir 디렉토리를 test의 output 디렉토리로 지정 -> 스니펫 조각들이 build/generated-snippets로 출력
+	outputs.dir snippetsDir
 	useJUnitPlatform()
+}
+
+asciidoctor {
+	dependsOn test // 'test' Task 이후 'asciidoctor' Task가 수행되도록 설정(Docs가 생성되기전에 테스트가 수행되도록 보장)
+	configurations 'asciidoctorExtensions'
+	inputs.dir snippetsDir // 스니펫 저장 위치를 인풋으로 설정
+
+	sources {
+		include '**/index.adoc'
+	}
+	baseDirFollowsSourceFile()
+}
+
+asciidoctor.doFirst {
+	delete file('src/main/resources/static/docs') // 기존의 docs 삭제
+}
+
+// asciidoctor 작업 이후 생성된 html 파일을 static/docs 로 copy
+task copyDocs(type: Copy) {
+	dependsOn asciidoctor
+	from file("build/docs/asciidoc")
+	into file("src/main/resources/static/docs")
+}
+
+// build 의 의존작업
+build {
+	dependsOn copyDocs
 }

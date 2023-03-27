@@ -1,0 +1,11 @@
+ifndef::snippets[]
+:snippets: build/generated-snippets
+endif::[]
+
+[[Member-API]]
+== Member API
+
+[[Member-단일-조회]]
+=== Member 단일 조회
+
+operation::member-get-one[snippets='http-request,path-parameters,response-body,response-fields']

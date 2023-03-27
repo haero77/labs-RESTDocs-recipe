@@ -1,0 +1,10 @@
+:hardbreaks:
+:doctype: book
+:source-highlighter: highlightjs
+:toc: left
+:toclevels: 2
+:sectlinks:
+
+= [LABS] REST Docs
+
+include::Member-API.adoc[]
